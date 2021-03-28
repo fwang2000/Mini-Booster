@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class RocketMechanics : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class RocketMechanics : MonoBehaviour
 
     [SerializeField]
     float rotationForce = 100.0f;
+
+    private bool soundFadeOut = false;
 
     // Start is called before the first frame update
     void Start()
@@ -28,20 +31,42 @@ public class RocketMechanics : MonoBehaviour
         Thrust();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "Friendly":
+                print("ok");
+                break;
+            case "Fuel":
+                print("fuel gained");
+                break;
+            case "Finish":
+                print("wow good job!");
+                break;
+            default:
+                ReloadScene();
+                break;
+        }
+    }
+
+    private void ReloadScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
     private void Rotate()
     {
+        rocketBody.freezeRotation = true;
         if (Input.GetKey(KeyCode.A))
         {
-            rocketBody.freezeRotation = true;
             transform.Rotate(Vector3.right * rotationForce * Time.deltaTime);
-            rocketBody.freezeRotation = false;
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            rocketBody.freezeRotation = true;
             transform.Rotate(Vector3.left * rotationForce * Time.deltaTime);
-            rocketBody.freezeRotation = false;
         }
+        rocketBody.freezeRotation = false;
     }
 
     private void Thrust()
@@ -49,6 +74,8 @@ public class RocketMechanics : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             rocketBody.AddRelativeForce(Vector3.up * thrustForce * Time.deltaTime);
+            soundFadeOut = false;
+            audioSource.volume = 0.48f;
 
             if (!audioSource.isPlaying)
             {
@@ -57,7 +84,12 @@ public class RocketMechanics : MonoBehaviour
         }
         else
         {
-            audioSource.Stop();
+            soundFadeOut = true;
+        }
+
+        if (soundFadeOut && audioSource.volume > 0.001f)
+        {
+            audioSource.volume *= 0.8f;
         }
     }
 }
